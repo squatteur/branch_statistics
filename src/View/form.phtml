@@ -1,0 +1,215 @@
+<?php
+
+use \Fisharebest\Webtrees\Theme;
+
+namespace Fisharebest\Webtrees;
+
+/** @var \RSO\WebtreesModule\Branch_Statistics\Controller\Chart $this */
+global $WT_TREE;
+$stats = new Stats($WT_TREE);
+
+?>
+<main id="content">
+<div id="page-fan">
+    <h2><?php echo $this->getPageTitle() ?></h2>
+
+    <form name="people" method="get" action="?">
+        <input type="hidden" name="ged" value="<?php echo $this->getTree()->getNameHtml() ?>">
+        <input type="hidden" name="mod" value="branch_statistics">
+        <table class="list_table">
+            <tbody>
+                <tr>
+                    <td class="descriptionbox">
+                        <label for="rootid"><?php echo $this->translate('Individual') ?></label>
+                    </td>
+                    <td class="optionbox">
+                        <input class="pedigree_form" data-autocomplete-type="INDI" type="text" name="rootid" id="rootid" size="3" value="<?php echo $this->root->getXref() ?>">
+                        <?php echo $this->printFindIndividualLink() ?>
+                    </td>
+                    <td class="descriptionbox">
+                        <label for="generations"><?php echo $this->translate('Generations') ?></label>
+                    </td>
+                    <td class="optionbox">
+                        <?php echo $this->getGenerationsInputControl() ?>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="descriptionbox" rowspan="2">
+                        <?php echo $this->translate('Layout') ?>
+                    </td>
+                    <td class="optionbox">
+                        <label>
+                            <?php echo $this->getHideEmptySegmentsCheckbox() ?>
+                            <?php echo $this->translate('Hide empty segments') ?>
+                        </label>
+                    </td>
+                    <td class="topbottombar vmiddle" colspan="2">
+                        <input type="submit" value="<?php echo $this->translate('view') ?>">
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+
+<?php
+//echo I18N::translate('Total individuals: %s', $stats->totalIndividuals())."<br>";	
+
+$json = $this->jsonworker();
+$parsed_json = json_decode($json);
+
+$sum = [];
+for ($i=1; $i<=$this->generations+1; $i++)
+{
+	$sum[$i] = 0;
+}
+$cloud = [];
+
+$complet = 0;
+$total = 0;
+$totalmale = 0;
+$totalfemale = 0;
+$totaldead = 0;
+$totalalive = 0;
+$totalbirth = 0;
+$name = "";
+$generation_val = 0;
+$epok = array();
+
+$jsonIterator = new \RecursiveIteratorIterator(
+    new \RecursiveArrayIterator($parsed_json->{'data'}));
+foreach ($jsonIterator as $key => $val) {
+    if(!is_array($val)) {
+        switch ($key) {
+            case 'generation':
+                $sum[$val]++;
+                $generation_val = $val;
+                break;
+            case 'complet':
+                if ($val) { $complet++; }
+                break;
+            case 'name':
+                $total++;
+                $name = $val;
+                
+                if ($generation_val >= 16) { unset($sum[$val]); }
+                break;
+            case 'sex':
+                if($val == "M") { $totalmale++; }
+                if($val == "F") { $totalfemale++; }
+                break;
+            case 'dcd':
+                if($val == "true")
+                {
+                    $totaldead++;
+                }
+                else
+                {
+                    $totalalive++;
+                    $name_alive[] = $name;
+                }
+                break;
+            case 'born':
+                $date = explode("-",$val);
+                if ($date[0] != " ")
+                {
+                    $totalbirth++;
+                }
+                if ($val != 0)
+                {
+                    $epok[$generation_val][] = $val;
+                }
+                break;
+            case 'lieu':
+                if ($val != "")
+                {
+                    if (isset($cloud[$val]))
+                    {
+                        $cloud[$val]++;
+                    }
+                    else
+                    {
+                        $cloud[$val] = 1;
+                    }
+                }
+                break;
+        }
+    }
+}
+?>
+
+<table class="facts_table">
+    <thead>
+        <tr>
+            <th data-column-id="Génération" data-type="numeric">Génération</th>
+            <th data-column-id="Degré" data-type="numeric">Degré</th>
+            <th data-column-id="Nombre d'individus\nde la génération">Nombre d'individus</th>
+            <th data-column-id="Nombre total d'individus (cumul)" data-type="numeric">Nombre total d'individus (cumul)</th>
+            <th data-column-id="Époque de vie" data-type="numeric">Époque de vie</th>
+            <th data-column-id="Commentaires">Commentaires</th>
+	 </tr>
+    </thead>
+    <tbody>
+
+    <?php
+    $indi=1;
+    $total_indi = 1;
+    $total = 0;
+    
+    for ($i=1; $i<=$this->generations+1; $i++)
+    {
+        //break if there are no more individuals
+        if ($sum[$i] == 0)
+        {
+            break;
+        }
+        // calcul de la médiane de la date de naissance
+        $epoque = $this->calculate_median($epok[$i],50);
+
+        $total = $total + $sum[$i];
+        echo '
+        <tr class="facts_value"><td>'.$i.'</td>
+        <td>'.($i-1).'</td>
+        <td><meter min="0" optimum="'.$indi.'" low="'.($indi/4).'" high="'.($indi/2).'" max="'.$indi.'" value="'.$sum[$i].'"></meter> '.$sum[$i].'/'.$indi.'</td>
+        <td>'.$total .'/'. ($total_indi).' individu'.(($i>1)?'s':"").'</td>
+        <td>'.$epoque.'</td>
+        <td>Le de cujus ou souche de l\'arbre ou individu racine
+        ';
+        echo '</td></tr>';
+        $indi = $indi+$indi;
+
+        $total_indi = $total_indi + $indi;
+    }
+
+?>
+
+    </tbody>
+</table>
+
+<table class="facts_value">
+    <thead>
+        <tr class="facts_value">
+            <th data-column-id="Nombre d’individus complets/trouvés" data-type="numeric">Nombre d’individus complets/trouvés</th>
+            <th data-column-id="Nombre d’hommes" data-type="numeric">Nombre d’hommes</th>
+            <th data-column-id="Nombre de femmes" data-type="numeric">Nombre de femmes</th>
+            <th data-column-id="Nombre d'individus décédés" data-type="numeric">Nombre d'individus décédés</th>
+            <th data-column-id="Nombre de personnes en vie" data-type="numeric">Nombre d'individus en vie</th>
+            <th data-column-id="Nombre total de naissances" data-type="numeric">Nombre total de naissances</th>
+	 </tr>
+    </thead>
+    <tbody>
+		<tr>
+		<td class="facts_value"><meter min="0" low="<?php echo $total/4;?>" high="<?php echo $total/2;?>" optimum="<?php echo $total;?>" max="<?php echo $total;?>" value="<?php echo $sum[$parsed_json->{'generations'}];?>"></meter><?php echo " ".$complet."/". $total.""; ?></td>
+		<td class="facts_value statistics-page"><?php echo $totalmale;?></td>
+		<td class="facts_value statistics-page"><?php echo $totalfemale;?></td>
+		<td class="facts_value statistics-page"><?php echo $totaldead;?></td>
+		<td class="facts_value statistics-page"><?php echo $totalalive;?></td>
+		<td class="facts_value statistics-page"><?php echo $totalbirth;?></td>
+		</tr>
+    </tbody>
+</table>
+<?php
+echo "<p><br>Individu en vie :</br>";
+foreach ($name_alive as $key => $value) {
+    echo ($key+1).' : '.$value.'<br>';
+}
+echo '</p></main>';

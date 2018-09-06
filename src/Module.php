@@ -194,8 +194,8 @@ class Module extends AbstractModule implements ModuleChartInterface
             ->pageHeader()
             ->addExternalJavascript(WT_AUTOCOMPLETE_JS_URL);
 
-            echo '<link rel="stylesheet" type="text/css" href="'
-            . $urlPath . '/css/statistics.css">';
+            //echo '<link rel="stylesheet" type="text/css" href="'
+            //. $urlPath . '/css/statistics.css">';
 
         echo $controller->render();
     }

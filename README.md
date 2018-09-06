@@ -1,6 +1,6 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](http://www.gnu.org/licenses/gpl-3.0)
 
-# branch_statistics
+# Branch Statistics
 This modules provides others statistics for the [webtrees](https://www.webtrees.net) genealogy application.
 
 ## Installation

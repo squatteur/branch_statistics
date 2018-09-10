@@ -66,20 +66,6 @@ class Chart extends ChartController
     const MAX_GENERATIONS = 18;
 
     /**
-     * Number of generations to display.
-     *
-     * @var int
-     */
-    private $generations = 10;
-
-    /**
-     * Whether to hide empty segments of chart or not.
-     *
-     * @var bool
-     */
-    private $hideEmptySegments = false;
-
-    /**
      * Constructor.
      */
     public function __construct()
@@ -91,10 +77,9 @@ class Chart extends ChartController
 
         // Extract the request parameters
         $this->generations        = Filter::getInteger('generations', self::MIN_GENERATIONS, self::MAX_GENERATIONS, $defaultGenerations);
-        $this->hideEmptySegments  = Filter::getBool('hideEmptySegments');
 
         // Create page title
-        $title = 'Branch Statistics';
+        $title = $this->translate('Branch Statistics');
 
         if ($this->root && $this->root->canShowName()) {
             $title = $this->translate('Branch Statistics of %s', $this->root->getFullName());
@@ -270,16 +255,6 @@ class Chart extends ChartController
     }
 
     /**
-     * Get the HTML for the "hideEmptySegments" checkbox element.
-     *
-     * @return string
-     */
-    private function getHideEmptySegmentsCheckbox()
-    {
-        return FunctionsEdit::twoStateCheckbox('hideEmptySegments', $this->hideEmptySegments);
-    }
-
-    /**
      * Get the HTML for the "generations" input form control element.
      *
      * @return string
@@ -372,7 +347,6 @@ class Chart extends ChartController
             array(
                 'rtl'                => I18N::direction() === 'rtl',
                 'generations'        => $this->generations,
-                'hideEmptySegments'  => $this->hideEmptySegments,
                 'updateUrl'          => $this->getUpdateUrl(),
                 'individualUrl'      => $this->getIndividualUrl(),
                 'data'               => $this->buildJsonTree($this->root),

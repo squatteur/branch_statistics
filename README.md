@@ -20,3 +20,5 @@ If you are using ``git``, you could also clone the current master into your `web
 ## Usage
 At the charts menu, you will find a new link called `branch statistics`.
 
+![Control panel - Module administration](/assets/page-branch-statistics.png)
+

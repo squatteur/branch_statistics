@@ -1,16 +1,16 @@
 <?php
-
+use \Fisharebest\Webtrees\I18N;
 use \Fisharebest\Webtrees\Theme;
 
 namespace Fisharebest\Webtrees;
+use \Fisharebest\Webtrees\Functions\FunctionsCharts;
 
-/** @var \RSO\WebtreesModule\Branch_Statistics\Controller\Chart $this */
 global $WT_TREE;
 $stats = new Stats($WT_TREE);
 
 ?>
 <main id="content">
-<div id="page-fan">
+<div id="page-branch-statistics">
     <h2><?php echo $this->getPageTitle() ?></h2>
 
     <form name="people" method="get" action="?">
@@ -20,28 +20,21 @@ $stats = new Stats($WT_TREE);
             <tbody>
                 <tr>
                     <td class="descriptionbox">
-                        <label for="rootid"><?php echo $this->translate('Individual') ?></label>
+                        <label for="rootid"><?php echo I18N::translate('Individual') ?></label>
                     </td>
                     <td class="optionbox">
                         <input class="pedigree_form" data-autocomplete-type="INDI" type="text" name="rootid" id="rootid" size="3" value="<?php echo $this->root->getXref() ?>">
                         <?php echo $this->printFindIndividualLink() ?>
                     </td>
-                    <td class="descriptionbox">
-                        <label for="generations"><?php echo $this->translate('Generations') ?></label>
-                    </td>
-                    <td class="optionbox">
-                        <?php echo $this->getGenerationsInputControl() ?>
+                    <td class="topbottombar vmiddle" colspan="2">
                     </td>
                 </tr>
                 <tr>
-                    <td class="descriptionbox" rowspan="2">
-                        <?php echo $this->translate('Layout') ?>
+                <td class="descriptionbox">
+                        <label for="generations"><?php echo I18N::translate('Number of generations') ?></label>
                     </td>
                     <td class="optionbox">
-                        <label>
-                            <?php echo $this->getHideEmptySegmentsCheckbox() ?>
-                            <?php echo $this->translate('Hide empty segments') ?>
-                        </label>
+                        <?php echo $this->getGenerationsInputControl() ?>
                     </td>
                     <td class="topbottombar vmiddle" colspan="2">
                         <input type="submit" value="<?php echo $this->translate('view') ?>">
@@ -52,7 +45,6 @@ $stats = new Stats($WT_TREE);
     </form>
 
 <?php
-//echo I18N::translate('Total individuals: %s', $stats->totalIndividuals())."<br>";	
 
 $json = $this->jsonworker();
 $parsed_json = json_decode($json);
@@ -140,12 +132,11 @@ foreach ($jsonIterator as $key => $val) {
 <table class="facts_table">
     <thead>
         <tr>
-            <th data-column-id="Génération" data-type="numeric">Génération</th>
-            <th data-column-id="Degré" data-type="numeric">Degré</th>
-            <th data-column-id="Nombre d'individus\nde la génération">Nombre d'individus</th>
-            <th data-column-id="Nombre total d'individus (cumul)" data-type="numeric">Nombre total d'individus (cumul)</th>
-            <th data-column-id="Époque de vie" data-type="numeric">Époque de vie</th>
-            <th data-column-id="Commentaires">Commentaires</th>
+            <th data-column-id=<?php echo I18N::translate("Generation") ?> data-type="numeric"><?php echo I18N::translate("Generation") ?></th>
+            <th data-column-id=<?php echo I18N::translate("Total individuals") ?> data-type="numeric"><?php echo I18N::translate("Total individuals") ?></th>
+            <th data-column-id=<?php echo I18N::translate("Total individuals (cumulative)") ?> data-type="numeric"><?php echo I18N::translate("Total individuals (cumulative)") ?></th>
+            <th data-column-id=<?php echo I18N::translate("Time of life") ?> data-type="numeric"><?php echo I18N::translate("Time of life") ?></th>
+            <th data-column-id=<?php echo I18N::translate("Ancestors") ?>><?php echo I18N::translate("Ancestors") ?></th>
 	 </tr>
     </thead>
     <tbody>
@@ -162,18 +153,39 @@ foreach ($jsonIterator as $key => $val) {
         {
             break;
         }
-        // calcul de la médiane de la date de naissance
+        // calculating the median birth dates
         $epoque = $this->calculate_median($epok[$i],50);
-
+        switch ($i) {
+            case '1':
+                $relationship = I18N::translate('self');
+                break;
+            case '2':
+                $relationship = I18N::translate('Parents');
+                break;
+            case '3':
+                $relationship = I18N::translateContext('parent’s parent', 'grandparent');
+                break;
+            case '4':
+                $relationship = I18N::translateContext('parent’s parent’s parent', 'great-grandparent');
+                break;
+            default:
+                $relationship = I18N::translate('great ×%s grandparent', I18N::number($i - 1));
+                break;
+        }
+        
+        //$relationship = FunctionsCharts::getSosaName($i + 2);
         $total = $total + $sum[$i];
+        if ($total_indi == 1) {
+            $text_total_indi = I18N::translate('Individual');
+        } else {
+            $text_total_indi = I18N::translate('Individuals');
+        }
         echo '
         <tr class="facts_value"><td>'.$i.'</td>
-        <td>'.($i-1).'</td>
         <td><meter min="0" optimum="'.$indi.'" low="'.($indi/4).'" high="'.($indi/2).'" max="'.$indi.'" value="'.$sum[$i].'"></meter> '.$sum[$i].'/'.$indi.'</td>
-        <td>'.$total .'/'. ($total_indi).' individu'.(($i>1)?'s':"").'</td>
+        <td>'.$total .'/'. ($total_indi).' '.$text_total_indi .'</td>
         <td>'.$epoque.'</td>
-        <td>Le de cujus ou souche de l\'arbre ou individu racine
-        ';
+        <td>'.$relationship;
         echo '</td></tr>';
         $indi = $indi+$indi;
 
@@ -184,31 +196,31 @@ foreach ($jsonIterator as $key => $val) {
 
     </tbody>
 </table>
-
+<br>
 <table class="facts_value">
     <thead>
         <tr class="facts_value">
-            <th data-column-id="Nombre d’individus complets/trouvés" data-type="numeric">Nombre d’individus complets/trouvés</th>
-            <th data-column-id="Nombre d’hommes" data-type="numeric">Nombre d’hommes</th>
-            <th data-column-id="Nombre de femmes" data-type="numeric">Nombre de femmes</th>
-            <th data-column-id="Nombre d'individus décédés" data-type="numeric">Nombre d'individus décédés</th>
-            <th data-column-id="Nombre de personnes en vie" data-type="numeric">Nombre d'individus en vie</th>
-            <th data-column-id="Nombre total de naissances" data-type="numeric">Nombre total de naissances</th>
+            <th data-column-id=<?php echo I18N::translate("Number of complete / found individuals") ?> data-type="numeric"><?php echo I18N::translate("Number of complete / found individuals") ?></th>
+            <th data-column-id=<?php echo I18N::translate("Total males") ?> data-type="numeric"><?php echo I18N::translate("Total males") ?></th>
+            <th data-column-id=<?php echo I18N::translate("Total females") ?> data-type="numeric"><?php echo I18N::translate("Total females") ?></th>
+            <th data-column-id=<?php echo I18N::translate("Total dead") ?> data-type="numeric"><?php echo I18N::translate("Total dead") ?></th>
+            <th data-column-id=<?php echo I18N::translate("Total living") ?> data-type="numeric"><?php echo I18N::translate("Total living") ?></th>
+            <th data-column-id=<?php echo I18N::translate("Total births") ?> data-type="numeric"><?php echo I18N::translate("Total births") ?></th>
 	 </tr>
     </thead>
     <tbody>
 		<tr>
 		<td class="facts_value"><meter min="0" low="<?php echo $total/4;?>" high="<?php echo $total/2;?>" optimum="<?php echo $total;?>" max="<?php echo $total;?>" value="<?php echo $sum[$parsed_json->{'generations'}];?>"></meter><?php echo " ".$complet."/". $total.""; ?></td>
-		<td class="facts_value statistics-page"><?php echo $totalmale;?></td>
-		<td class="facts_value statistics-page"><?php echo $totalfemale;?></td>
-		<td class="facts_value statistics-page"><?php echo $totaldead;?></td>
-		<td class="facts_value statistics-page"><?php echo $totalalive;?></td>
-		<td class="facts_value statistics-page"><?php echo $totalbirth;?></td>
+		<td class="facts_value branchs-statistics-page"><?php echo $totalmale;?></td>
+		<td class="facts_value branchs-statistics-page"><?php echo $totalfemale;?></td>
+		<td class="facts_value branchs-statistics-page"><?php echo $totaldead;?></td>
+		<td class="facts_value branchs-statistics-page"><?php echo $totalalive;?></td>
+		<td class="facts_value branchs-statistics-page"><?php echo $totalbirth;?></td>
 		</tr>
     </tbody>
 </table>
 <?php
-echo "<p><br>Individu en vie :</br>";
+echo "<p><br>".I18N::translate("Total living")." :</br>";
 foreach ($name_alive as $key => $value) {
     echo ($key+1).' : '.$value.'<br>';
 }

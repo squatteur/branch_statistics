@@ -144,7 +144,7 @@ class Module extends AbstractModule implements ModuleChartInterface
         return new Menu(
             $this->getTitle(),
             $link,
-            'menu-chart-fanchart',
+            'menu-chart-statistics',
             array(
                 'rel' => 'nofollow',
             )

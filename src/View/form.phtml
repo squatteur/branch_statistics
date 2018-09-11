@@ -154,7 +154,12 @@ foreach ($jsonIterator as $key => $val) {
             break;
         }
         // calculating the median birth dates
-        $epoque = $this->calculate_median($epok[$i],50);
+        if (isset($epok[$i])) {
+            $epoque = $this->calculate_median($epok[$i],50);
+        } else {
+            $epoque = "-";
+        }
+        
         switch ($i) {
             case '1':
                 $relationship = I18N::translate('self');

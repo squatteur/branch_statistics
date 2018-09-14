@@ -17,7 +17,7 @@ msgstr ""
 
 #: src/Controller/Chart.php:97
 #: src/Module.php:106
-msgid "Branch Statistics"
+msgid "Branch statistics"
 msgstr "Statistiques de la branche d'un individu"
 
 #: src/Controller/Chart.php:97
@@ -51,5 +51,5 @@ msgstr "afficher"
 
 #: src/View/form.phtml:209
 msgid "Number of complete / found individuals"
-msgstr "Nombre d’individus complets/trouvés"
+msgstr "Nombre d’individus traités/trouvés"
 
